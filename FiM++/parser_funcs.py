@@ -4,7 +4,7 @@ from arithmetic import Arithmetic
 from comparison import Comparison
 
 
-class Parser:
+class ParserFuncs:
     @staticmethod
     def erase_article_from_start_str(str):
         if str.find(' ') == 1:
@@ -32,7 +32,7 @@ class Parser:
             elif "I learned" in sentences[i]:
                 decl = sentences[i][len("I learned "):]
                 name_method, type_return, args = \
-                    Parser.parse_decl_of_method(decl)
+                    ParserFuncs.parse_decl_of_method(decl)
                 if name_method == "ErrorName":
                     raise SyntaxError("Invalid name method: " + sentences[i])
                 if type_return == "ErrorTypeReturn":
@@ -68,7 +68,7 @@ class Parser:
         type_return = None
         if has_with:
             type_return = TypeVariable.parse_type(
-                Parser.erase_article_from_start_str(parsed_decl[0]))
+                ParserFuncs.erase_article_from_start_str(parsed_decl[0]))
             if type_return is None:
                 return None, "ErrorTypeReturn", None
             parsed_decl.pop(0)
@@ -77,14 +77,14 @@ class Parser:
             args = {}
             parsed_args = re.split(r' and ', parsed_decl[0])
             for arg in parsed_args:
-                arg = Parser.erase_article_from_start_str(arg)
+                arg = ParserFuncs.erase_article_from_start_str(arg)
                 if arg.find(" ") == -1:
                     return None, None, "ErrorDeclArg"
                 type_arg = TypeVariable.parse_type(arg[:arg.find(" ")])
                 if type_arg is None:
                     return None, None, "ErrorTypeArg"
                 name_arg = arg[arg.find(" ") + 1:]
-                if not Parser.check_var_name(name_arg):
+                if not ParserFuncs.check_var_name(name_arg):
                     return None, None, "ErrorArgName"
                 args[name_arg] = type_arg
         return name_method, type_return, args
@@ -111,7 +111,7 @@ class Parser:
 
     @staticmethod
     def parse_input(input):
-        if Parser.isnumber(input):
+        if ParserFuncs.isnumber(input):
             return float(input), TypeVariable.number
         if input == "yes" or input == "true" \
                 or input == "right" or input == "correct":
@@ -126,7 +126,7 @@ class Parser:
     @staticmethod
     def check_val_and_type(val, type):
         if type == TypeVariable.number:
-            if not isinstance(val, str) and Parser.isnumber(val):
+            if not isinstance(val, str) and ParserFuncs.isnumber(val):
                 return True
             return False
         if type == TypeVariable.logic:
@@ -138,7 +138,7 @@ class Parser:
                 return True
             return False
         if type == TypeVariable.phrase:
-            if Parser.isnumber(val) or isinstance(val, bool):
+            if ParserFuncs.isnumber(val) or isinstance(val, bool):
                 return False
             return True
         return False
@@ -157,11 +157,11 @@ class Parser:
 
     @staticmethod
     def get_val_by_str_and_type(string, type, vars, worker):
-        val = Parser.get_val_by_str(string, vars, worker)
+        val = ParserFuncs.get_val_by_str(string, vars, worker)
         if val is None:
             return "ErrorValue", None
         if type == "number":
-            if Parser.isnumber(val):
+            if ParserFuncs.isnumber(val):
                 return val, TypeVariable.number
             return "ErrorValue", None
         if type == "letter" or type == "character":
@@ -185,12 +185,12 @@ class Parser:
             return vars[val][0]
         name_var = worker.is_change_var(val)
         if name_var is not None:
-            return_val = Parser.get_val_in_array(val, name_var, vars, worker)
+            return_val = ParserFuncs.get_val_in_array(val, name_var, vars, worker)
             if return_val == "ErrorIndex":
                 return None
             if return_val is not None:
                 return return_val
-        if Parser.isnumber(val):
+        if ParserFuncs.isnumber(val):
             return float(val)
         if len(val) == 0:
             return None
@@ -227,7 +227,7 @@ class Parser:
             return array
         vals = re.split(r" and ", str)
         for str_val in vals:
-            val = Parser.get_val_by_str(str_val, vars, worker)
+            val = ParserFuncs.get_val_by_str(str_val, vars, worker)
             if TypeVariable.get_type_by_val(val) != type_vals:
                 return "ValueError"
             array.append(val)
@@ -249,8 +249,8 @@ class Parser:
         if vars[name_var][1].value < TypeVariable.arrayNumbers.value:
             return None
         index_str = str[len(name_var) + 1:]
-        index = Parser.get_val_by_str(index_str, vars, worker)
-        if not Parser.isint(index):
+        index = ParserFuncs.get_val_by_str(index_str, vars, worker)
+        if not ParserFuncs.isint(index):
             return "ErrorIndex"
         index = int(index) - 1
         if index < 0 or index >= len(vars[name_var][0]):
@@ -283,4 +283,4 @@ class Parser:
                 text += new_line
         split_text = re.findall(r'''((?:[^\.!\?:"]|"[^"]*"|'[^']*')+)''',
                                 text)
-        return Parser.get_sentences_by_split_text(split_text)
+        return ParserFuncs.get_sentences_by_split_text(split_text)

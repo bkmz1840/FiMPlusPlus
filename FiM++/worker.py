@@ -1,5 +1,5 @@
 import re
-from parser import Parser
+from parser_funcs import ParserFuncs
 from variables_types import TypeVariable
 from arithmetic import Arithmetic
 from comparison import Comparison
@@ -112,16 +112,16 @@ class Worker:
 
     def output(self, token, sentence, vars):
         print_text = sentence[len(token) + 1:]
-        val = Parser.get_val_by_str(print_text, vars, self)
+        val = ParserFuncs.get_val_by_str(print_text, vars, self)
         if val is None:
             val = "nothing"
         print(val)
 
     def input(self, token, sentence, vars, prompt=""):
         name_var = sentence[len(token) + 1:]
-        if not Parser.check_var_name(name_var):
+        if not ParserFuncs.check_var_name(name_var):
             raise SyntaxError("Invalid name of variable: " + sentence)
-        val, type = Parser.parse_input(input(prompt))
+        val, type = ParserFuncs.parse_input(input(prompt))
         vars[name_var] = (val, type, False)
 
     def prompt(self, token, sentence, vars):
@@ -150,7 +150,7 @@ class Worker:
         var_data = re.findall(reg_exp, sentence)
         if len(var_data) == 0 or len(var_data[0]) > 8:
             raise SyntaxError("Invalid declaration of variable: " + sentence)
-        if not Parser.check_var_name(var_data[0][0]):
+        if not ParserFuncs.check_var_name(var_data[0][0]):
             raise NameError("Invalid name of variable: " + sentence)
         is_const = False
         if "always" in var_data[0][1] or "always" in var_data[0][3]:
@@ -171,8 +171,8 @@ class Worker:
             if type_vals is None:
                 raise TypeError("The type of variable is not a array: " +
                                 sentence)
-            val = Parser.parse_array_val(var_data[0][6], type_vals,
-                                         vars, self)
+            val = ParserFuncs.parse_array_val(var_data[0][6], type_vals,
+                                              vars, self)
             if val == "ValueError":
                 raise ValueError("Invalid values of array: " + sentence)
             if is_const and val == []:
@@ -180,7 +180,7 @@ class Worker:
             vars[var_data[0][0]] = (val, type, is_const, type_vals)
             return
         if var_data[0][6] != '':
-            val, type = Parser.get_val_by_str_and_type(
+            val, type = ParserFuncs.get_val_by_str_and_type(
                 var_data[0][6], var_data[0][4], vars, self)
             if val == "ErrorValue":
                 raise ValueError("Invalid value for this type: " + sentence)
@@ -208,17 +208,17 @@ class Worker:
             if vars[name_var][1].value < TypeVariable.arrayNumbers.value:
                 raise TypeError("The variable is not a array: " + sentence)
             index_str = parsed_sentence[0][len(name_var) + 1:]
-            index = Parser.get_val_by_str(index_str, vars, self)
-            if not Parser.isint(index):
+            index = ParserFuncs.get_val_by_str(index_str, vars, self)
+            if not ParserFuncs.isint(index):
                 raise IndexError("Index must be integer: " + sentence)
             index = int(index) - 1
             if index < 0 or index > len(vars[name_var][0]):
                 raise IndexError("Index out of range: " + sentence)
-            val = Parser.get_val_by_str(parsed_sentence[1], vars, self)
+            val = ParserFuncs.get_val_by_str(parsed_sentence[1], vars, self)
             type = vars[name_var][3]
             if val is None:
                 raise ValueError("Unexpected value: " + sentence)
-            if not Parser.check_val_and_type(val, type):
+            if not ParserFuncs.check_val_and_type(val, type):
                 raise ValueError("Invalid type of value: " + sentence)
             if index == len(vars[name_var][0]):
                 vars[name_var][0].append(val)
@@ -229,11 +229,11 @@ class Worker:
             raise NameError("The variable not found: " + sentence)
         if vars[parsed_sentence[0]][2]:
             raise ValueError("Can not change value by const: " + sentence)
-        val = Parser.get_val_by_str(parsed_sentence[1], vars, self)
+        val = ParserFuncs.get_val_by_str(parsed_sentence[1], vars, self)
         type = vars[parsed_sentence[0]][1]
         if val is None:
             raise ValueError("Unexpected value: " + sentence)
-        if not Parser.check_val_and_type(val, type):
+        if not ParserFuncs.check_val_and_type(val, type):
             raise ValueError("Invalid type of value: " + sentence)
         vars[parsed_sentence[0]] = (val, type, False)
 
@@ -287,7 +287,7 @@ class Worker:
                 if name_var in vars:
                     self.buffer["args"].append(vars[name_var])
                 else:
-                    val = Parser.get_val_by_str(name_var, vars, self)
+                    val = ParserFuncs.get_val_by_str(name_var, vars, self)
                     if val is None:
                         raise ValueError("Invalid value of argument: " +
                                          sentence)
@@ -306,7 +306,7 @@ class Worker:
             raise SyntaxError("This method does not return anything: " +
                               sentence)
         val_str = sentence[len(token) + 1:]
-        val = Parser.get_val_by_str(val_str, vars, self)
+        val = ParserFuncs.get_val_by_str(val_str, vars, self)
         type_val = TypeVariable.get_type_by_val(val)
         if type_val != self\
                 .classes[self.current_class][self.current_method][1]:
@@ -378,7 +378,7 @@ class Worker:
                 or str_val.find("rd") == len(str_val) - 2 \
                 or str_val.find("th") == len(str_val) - 2:
             str_val = str_val[:-2]
-        val = Parser.get_val_by_str(str_val, vars, self)
+        val = ParserFuncs.get_val_by_str(str_val, vars, self)
         if not isinstance(val, float):
             raise ValueError("Value of case must be a number: " + sentence)
         name_var = self.buffer["loops"][self.current_method][-1][1]
@@ -500,10 +500,10 @@ class Worker:
                 raise SyntaxError("Invalid declaration of loop: " +
                                   sentence)
             if split_decl[0] not in vars:
-                if not Parser.check_var_name(split_decl[0]):
+                if not ParserFuncs.check_var_name(split_decl[0]):
                     raise NameError("Invalid name of variable: " + sentence)
-                l_bound = Parser.get_val_by_str(split_decl[1], vars, self)
-                r_bound = Parser.get_val_by_str(split_decl[2], vars, self)
+                l_bound = ParserFuncs.get_val_by_str(split_decl[1], vars, self)
+                r_bound = ParserFuncs.get_val_by_str(split_decl[2], vars, self)
                 if type == TypeVariable.number:
                     if l_bound is None or r_bound is None \
                             or not isinstance(l_bound, float) \
@@ -512,16 +512,16 @@ class Worker:
                                          sentence)
                     vars[split_decl[0]] = (l_bound, type, False)
                 elif type == TypeVariable.char:
-                    if not Parser.isint(l_bound) and len(l_bound) > 1 \
-                            or not Parser.isint(r_bound) and len(r_bound) > 1:
+                    if not ParserFuncs.isint(l_bound) and len(l_bound) > 1 \
+                            or not ParserFuncs.isint(r_bound) and len(r_bound) > 1:
                         raise ValueError("Invalid boundaries of loop: " +
                                          sentence)
-                    if Parser.isint(l_bound):
+                    if ParserFuncs.isint(l_bound):
                         vars[split_decl[0]] = (chr(int(l_bound)), type, False)
                     else:
                         vars[split_decl[0]] = (l_bound, type, False)
                         l_bound = ord(l_bound)
-                    if not Parser.isint(r_bound):
+                    if not ParserFuncs.isint(r_bound):
                         r_bound = ord(r_bound)
                 else:
                     raise TypeError("Unsupported type of loop: " + sentence)
@@ -539,9 +539,9 @@ class Worker:
         elif "in" in decl:
             split_decl = re.split(r" in ", decl)
             if split_decl[0] not in vars:
-                if not Parser.check_var_name(split_decl[0]):
+                if not ParserFuncs.check_var_name(split_decl[0]):
                     raise NameError("Invalid name of variable: " + sentence)
-                iter_obj = Parser.get_val_by_str(split_decl[1], vars, self)
+                iter_obj = ParserFuncs.get_val_by_str(split_decl[1], vars, self)
                 if iter_obj is None \
                         or not isinstance(iter_obj, list) \
                         and not isinstance(iter_obj, str):

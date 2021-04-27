@@ -1,4 +1,4 @@
-from parser import Parser
+import parser_funcs
 from worker import Worker
 
 
@@ -6,8 +6,10 @@ class Program:
     def __init__(self, path):
         with open(path, encoding="utf-8") as f:
             text = f.read().split('\n')
-        self.sentences = Parser.split_lines_by_sentences(text)
-        self.classes = Parser.find_all_class_methods(self.sentences)
+        self.sentences = parser_funcs.ParserFuncs\
+            .split_lines_by_sentences(text)
+        self.classes = parser_funcs.ParserFuncs\
+            .find_all_class_methods(self.sentences)
         self.worker = Worker()
 
     def find_main_method(self):
